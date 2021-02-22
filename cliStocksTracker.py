@@ -99,15 +99,19 @@ class Configuration:
         return self.config[key]
 
 
-    def parse_args():
-        # width , height , independent_graphs , timezone , rounding, stocks
+    def parse_args(self):
         parser = argparse.ArgumentParser(description="Take options for cliStockTracker.py")
-        parser.add_argument('--width', type=int, help="the width of the chart")
-        parser.add_argument('--height', type=int, help="the height of the chart")
-        parser.add_argument('--independent-graphs', action='store_true', help="show a chart for each stock")
-        parser.add_argument('--timezone', type=str, default="America/New_York", help="your timezione")
-        parser.add_argument('--rounding-mode', type=str, help="how should numbers be rounded")
-        parser.add_argument('--stocks-config', type=argparse.FileType("r", encoding="utf-8"), help="file with stonks")
+        parser.add_argument('-w', '--width', type=int, help="the width of the chart")
+        parser.add_argument('-h', '--height', type=int, help="the height of the chart")
+        parser.add_argument('-i', '--independent-graphs', action='store_true', help="show a chart for each stock")
+        parser.add_argument('-tz', '--timezone', type=str, default="America/New_York", help="your timezione")
+        parser.add_argument('-r', '--rounding-mode', type=str, help="how should numbers be rounded")
+        parser.add_argument('-ti', '--time-interval', type=str, help="specify time interval for graphs")
+        parser.add_argument('-tp', '--time-period', type=str, help="specify time period for graphs")
+        parser.add_argument('--config', type=argparse.FileType("r", encoding="utf-8"), help="regular config file")
+        parser.add_argument('--stocks-config', type=argparse.FileType("r", encoding="utf-8"), help="config file with your list of stonks")
+        args = parser.parse_args()
+        return args
 
 
     def parse_config(self) -> (dict, None):
