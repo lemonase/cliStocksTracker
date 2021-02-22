@@ -26,7 +26,9 @@ def main():
         new_stock = Stock(stock)
 
         # get the stock data
-        with contextlib.redirect_stdout(io.StringIO()): # this suppress output (library doesn't have a silent mode?)
+        with contextlib.redirect_stdout(
+            io.StringIO()
+        ):  # this suppress output (library doesn't have a silent mode?)
             data = market.download(tickers=stock, period="1d", interval="1m")
 
         # just get the value at each minute
@@ -36,13 +38,13 @@ def main():
         new_stock.data = data
 
         # save the current stock value
-        new_stock.value = data[-1] 
+        new_stock.value = data[-1]
 
         # are we graphing this stock?
         if "graph" in stocks_config[stock].keys():
             if stocks_config[stock]["graph"] == "True":
                 new_stock.graph = True
-       
+
         if "owned" in stocks_config[stock].keys():
             count = float(stocks_config[stock]["owned"])
         else:
@@ -62,11 +64,25 @@ def main():
         for stock in portfolio.get_stocks():
             if stock.graph:
                 graphing_list.append(stock)
-        graphs.append(Graph(graphing_list, int(config["frame"]["width"]), int(config["frame"]["height"]), autocolors.color_list[:len(graphing_list)]))
+        graphs.append(
+            Graph(
+                graphing_list,
+                int(config["frame"]["width"]),
+                int(config["frame"]["height"]),
+                autocolors.color_list[: len(graphing_list)],
+            )
+        )
     else:
         for i, stock in enumerate(portfolio.get_stocks()):
             if stock.graph:
-                graphs.append(Graph([stock], int(config["frame"]["width"]), int(config["frame"]["height"]), [autocolors.color_list[i]]))
+                graphs.append(
+                    Graph(
+                        [stock],
+                        int(config["frame"]["width"]),
+                        int(config["frame"]["height"]),
+                        [autocolors.color_list[i]],
+                    )
+                )
 
     # generate and print the graphs
     for graph in graphs:
@@ -80,6 +96,7 @@ def main():
 
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
@@ -98,21 +115,46 @@ class Configuration:
     def __getitem__(self, key):
         return self.config[key]
 
-
     def parse_args(self):
-        parser = argparse.ArgumentParser(description="Take options for cliStockTracker.py")
-        parser.add_argument('-w', '--width', type=int, help="the width of the chart")
-        parser.add_argument('-h', '--height', type=int, help="the height of the chart")
-        parser.add_argument('-i', '--independent-graphs', action='store_true', help="show a chart for each stock")
-        parser.add_argument('-tz', '--timezone', type=str, default="America/New_York", help="your timezione")
-        parser.add_argument('-r', '--rounding-mode', type=str, help="how should numbers be rounded")
-        parser.add_argument('-ti', '--time-interval', type=str, help="specify time interval for graphs")
-        parser.add_argument('-tp', '--time-period', type=str, help="specify time period for graphs")
-        parser.add_argument('--config', type=argparse.FileType("r", encoding="utf-8"), help="regular config file")
-        parser.add_argument('--stocks-config', type=argparse.FileType("r", encoding="utf-8"), help="config file with your list of stonks")
+        parser = argparse.ArgumentParser(
+            description="Take options for cliStockTracker.py"
+        )
+        parser.add_argument("-w", "--width", type=int, help="the width of the chart")
+        parser.add_argument("-h", "--height", type=int, help="the height of the chart")
+        parser.add_argument(
+            "-i",
+            "--independent-graphs",
+            action="store_true",
+            help="show a chart for each stock",
+        )
+        parser.add_argument(
+            "-tz",
+            "--timezone",
+            type=str,
+            default="America/New_York",
+            help="your timezione",
+        )
+        parser.add_argument(
+            "-r", "--rounding-mode", type=str, help="how should numbers be rounded"
+        )
+        parser.add_argument(
+            "-ti", "--time-interval", type=str, help="specify time interval for graphs"
+        )
+        parser.add_argument(
+            "-tp", "--time-period", type=str, help="specify time period for graphs"
+        )
+        parser.add_argument(
+            "--config",
+            type=argparse.FileType("r", encoding="utf-8"),
+            help="regular config file",
+        )
+        parser.add_argument(
+            "--stocks-config",
+            type=argparse.FileType("r", encoding="utf-8"),
+            help="config file with your list of stonks",
+        )
         args = parser.parse_args()
         return args
-
 
     def parse_config(self) -> (dict, None):
         config = {}
@@ -140,7 +182,7 @@ class Stock:
         self.symbol = symbol
         self.value = 0
         self.data = []
-        self.graph = False # are we going to be graphing this stock?
+        self.graph = False  # are we going to be graphing this stock?
         return
 
     def calc_value(self, stocks_count):
@@ -156,7 +198,9 @@ class Stock:
         return self.data
 
     def __repr__(self):
-        print("Stock:", self.symbol, " ", self.value, " ", len(self.data), " ", self.graph)
+        print(
+            "Stock:", self.symbol, " ", self.value, " ", len(self.data), " ", self.graph
+        )
 
 
 class Portfolio(metaclass=Singleton):
@@ -169,7 +213,10 @@ class Portfolio(metaclass=Singleton):
     def add_stock(self, stock: Stock, count, value):
         self.stocks.append(stock)
         self.stocks_metadata[stock.symbol] = [float(count), float(value)]
-        self.initial_value += self.stocks_metadata[stock.symbol][0] * self.stocks_metadata[stock.symbol][1]
+        self.initial_value += (
+            self.stocks_metadata[stock.symbol][0]
+            * self.stocks_metadata[stock.symbol][1]
+        )
         return
 
     def get_stocks(self):
@@ -180,7 +227,7 @@ class Portfolio(metaclass=Singleton):
             if stock.symbol == symbol:
                 return stock
         return None
-    
+
     def print_table(self, config):
         # table format:
         #   ticker    owned   last    change  change% low high    avg
@@ -191,35 +238,82 @@ class Portfolio(metaclass=Singleton):
         # additional things to print: portfolio total value, portfolio change (and change %)
         mode = config["kwargs"]["rounding_mode"]
         cell_width = 11  # buffer space between columns
-        table = [["Ticker", "Last", "Change", "Change%", "Low", "High", "Avg", "Owned", "Aggregate Value", None]]
-        table.append(["-" * cell_width for _ in range(len(table[0]))])  # this is the solid line under the header
+        table = [
+            [
+                "Ticker",
+                "Last",
+                "Change",
+                "Change%",
+                "Low",
+                "High",
+                "Avg",
+                "Owned",
+                "Aggregate Value",
+                None,
+            ]
+        ]
+        table.append(
+            ["-" * cell_width for _ in range(len(table[0]))]
+        )  # this is the solid line under the header
         table[-1].append(None)  # make sure that solid line is not colored
         self.current_value = 0
         self.opening_value = 0
         for stock in self.stocks:
             line = []
-            change_d = utils.round_value(stock.get_curr() - stock.get_open(), mode, 2)  # change
-            change_p = utils.round_value((stock.get_curr() - stock.get_open()) / stock.get_curr() * 100, mode, 2)  # change %
+            change_d = utils.round_value(
+                stock.get_curr() - stock.get_open(), mode, 2
+            )  # change
+            change_p = utils.round_value(
+                (stock.get_curr() - stock.get_open()) / stock.get_curr() * 100, mode, 2
+            )  # change %
             line.append(stock.symbol)  # symbol
-            line.append("$" + str(utils.round_value(stock.get_curr(), mode, 2)))  # current value
+            line.append(
+                "$" + str(utils.round_value(stock.get_curr(), mode, 2))
+            )  # current value
             if change_d >= 0:  # insert the changes into the array
                 line.append("+$" + str(change_d))
                 line.append("+" + str(change_p) + "%")
             else:
-                line.append("-$" + str(change_d)[1:])  # string stripping here is to remove the native '-' sign
-                line.append("-" + str(change_p)[1:]+ "%")
-            line.append("$" + str(utils.round_value(min(stock.get_data()), mode, 2)))  # low
-            line.append("$" + str(utils.round_value(max(stock.get_data()), mode, 2)))  # high
-            line.append("$" + str(utils.round_value(sum(stock.get_data()) / len(stock.get_data()), mode, 2)))  # avg
-            line.append(str(round(self.stocks_metadata[stock.symbol][0], 3)))  # number of stocks owned
-            line.append("$" + str(utils.round_value(stock.calc_value(self.stocks_metadata[stock.symbol][0]), mode, 2)))
-            line.append(True if change_d >=0 else False)
+                line.append(
+                    "-$" + str(change_d)[1:]
+                )  # string stripping here is to remove the native '-' sign
+                line.append("-" + str(change_p)[1:] + "%")
+            line.append(
+                "$" + str(utils.round_value(min(stock.get_data()), mode, 2))
+            )  # low
+            line.append(
+                "$" + str(utils.round_value(max(stock.get_data()), mode, 2))
+            )  # high
+            line.append(
+                "$"
+                + str(
+                    utils.round_value(
+                        sum(stock.get_data()) / len(stock.get_data()), mode, 2
+                    )
+                )
+            )  # avg
+            line.append(
+                str(round(self.stocks_metadata[stock.symbol][0], 3))
+            )  # number of stocks owned
+            line.append(
+                "$"
+                + str(
+                    utils.round_value(
+                        stock.calc_value(self.stocks_metadata[stock.symbol][0]), mode, 2
+                    )
+                )
+            )
+            line.append(True if change_d >= 0 else False)
             table.append(line)
 
             # just add in the total value seeing as we're iterating stocks anyways
-            self.current_value += stock.calc_value(self.stocks_metadata[stock.symbol][0])
+            self.current_value += stock.calc_value(
+                self.stocks_metadata[stock.symbol][0]
+            )
             # and the opening value of all the tracked stocks
-            self.opening_value += stock.get_open() * self.stocks_metadata[stock.symbol][0]
+            self.opening_value += (
+                stock.get_open() * self.stocks_metadata[stock.symbol][0]
+            )
 
         print("\nPortfolio Summary:\n")
         format_str = "{:" + str(cell_width) + "}"
@@ -230,34 +324,90 @@ class Portfolio(metaclass=Singleton):
                 print(Fore.GREEN, end="")
             else:
                 print(Fore.RED, end="")
-            print('\t' + ''.join([format_str.format(item) for item in line[:-1]]))
-            print(Style.RESET_ALL, end="") 
-        print("\n" + "{:25}".format("Total Value: ") + format_str.format("$" + str(round(self.current_value, 2))))
+            print("\t" + "".join([format_str.format(item) for item in line[:-1]]))
+            print(Style.RESET_ALL, end="")
+        print(
+            "\n"
+            + "{:25}".format("Total Value: ")
+            + format_str.format("$" + str(round(self.current_value, 2)))
+        )
         value_gained_day = self.current_value - self.opening_value
         if value_gained_day >= 0:
             print("{:25}".format("Value Gained Today: "), end="")
             print(Fore.GREEN, end="")
-            print(format_str.format("+$" + str(utils.round_value(value_gained_day, mode, 2))) + format_str.format("+" + str(utils.round_value(value_gained_day / self.current_value * 100, mode, 2)) + "%"))
+            print(
+                format_str.format(
+                    "+$" + str(utils.round_value(value_gained_day, mode, 2))
+                )
+                + format_str.format(
+                    "+"
+                    + str(
+                        utils.round_value(
+                            value_gained_day / self.current_value * 100, mode, 2
+                        )
+                    )
+                    + "%"
+                )
+            )
         else:
             print("{:25}".format("Value Gained Today: "), end="")
             print(Fore.RED, end="")
-            print(format_str.format("-$" + str(utils.round_value(value_gained_day, mode, 2))[1:]) + format_str.format(str(utils.round_value(value_gained_day / self.current_value * 100, mode, 2)) + "%"))
+            print(
+                format_str.format(
+                    "-$" + str(utils.round_value(value_gained_day, mode, 2))[1:]
+                )
+                + format_str.format(
+                    str(
+                        utils.round_value(
+                            value_gained_day / self.current_value * 100, mode, 2
+                        )
+                    )
+                    + "%"
+                )
+            )
         print(Style.RESET_ALL, end="")
 
         value_gained_all = self.current_value - self.initial_value
         if value_gained_all >= 0:
-            print("{:25}".format("Value Gained Overall: "), end="") 
+            print("{:25}".format("Value Gained Overall: "), end="")
             print(Fore.GREEN, end="")
-            print(format_str.format("+$" + str(utils.round_value(value_gained_all, mode, 2))) + format_str.format("+" + str(utils.round_value(value_gained_all / self.current_value * 100, mode, 2)) + "%"))
+            print(
+                format_str.format(
+                    "+$" + str(utils.round_value(value_gained_all, mode, 2))
+                )
+                + format_str.format(
+                    "+"
+                    + str(
+                        utils.round_value(
+                            value_gained_all / self.current_value * 100, mode, 2
+                        )
+                    )
+                    + "%"
+                )
+            )
         else:
-            print("{:25}".format("Value Gained Overall: "), end="") 
+            print("{:25}".format("Value Gained Overall: "), end="")
             print(Fore.RED, end="")
-            print(format_str.format("-$" + str(utils.round_value(value_gained_all, mode, 2))[1:]) + format_str.format(str(utils.round_value(value_gained_all / self.current_value * 100, mode, 2)) + "%"))
+            print(
+                format_str.format(
+                    "-$" + str(utils.round_value(value_gained_all, mode, 2))[1:]
+                )
+                + format_str.format(
+                    str(
+                        utils.round_value(
+                            value_gained_all / self.current_value * 100, mode, 2
+                        )
+                    )
+                    + "%"
+                )
+            )
         print(Style.RESET_ALL, end="")
 
 
 class Graph:
-    def __init__(self, stocks: list, width: int, height: int, colors: list, *args, **kwargs):
+    def __init__(
+        self, stocks: list, width: int, height: int, colors: list, *args, **kwargs
+    ):
         self.stocks = stocks
         self.graph = ""
         self.colors = colors
@@ -266,8 +416,8 @@ class Graph:
         self.plot.width = width
         self.plot.height = height
         self.plot.color_mode = "rgb"
-        self.plot.X_label="Time"
-        self.plot.Y_label="Value"
+        self.plot.X_label = "Time"
+        self.plot.Y_label = "Value"
 
         if "timezone" in kwargs.keys():
             self.timezone = pytz.timezone(kwargs["timezone"])
@@ -275,14 +425,28 @@ class Graph:
             self.timezone = pytz.utc
 
         if "starttime" in kwargs.keys():
-            self.start = kwargs["startend"].replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            self.start = (
+                kwargs["startend"].replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            )
         else:
-            self.start = datetime.now().replace(hour=14, minute=30, second=0).replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            self.start = (
+                datetime.now()
+                .replace(hour=14, minute=30, second=0)
+                .replace(tzinfo=pytz.utc)
+                .astimezone(self.timezone)
+            )
 
         if "endtime" in kwargs.keys():
-            self.end = kwargs["endtime"].replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            self.end = (
+                kwargs["endtime"].replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            )
         else:
-            self.end = datetime.now().replace(hour=21, minute=0, second=0).replace(tzinfo=pytz.utc).astimezone(self.timezone)
+            self.end = (
+                datetime.now()
+                .replace(hour=21, minute=0, second=0)
+                .replace(tzinfo=pytz.utc)
+                .astimezone(self.timezone)
+            )
 
         self.plot.set_x_limits(min_=self.start, max_=self.end)
 
@@ -298,16 +462,20 @@ class Graph:
     def gen_graph(self):
         self.y_min, self.y_max = self.find_y_range()
         self.plot.set_y_limits(min_=self.y_min, max_=self.y_max)
-    
+
         for i, stock in enumerate(self.stocks):
-            self.plot.plot([self.start + timedelta(minutes=i) for i in range(len(stock.data))], stock.data,
-                      lc=webcolors.hex_to_rgb(self.colors[i]), label=stock.symbol)
+            self.plot.plot(
+                [self.start + timedelta(minutes=i) for i in range(len(stock.data))],
+                stock.data,
+                lc=webcolors.hex_to_rgb(self.colors[i]),
+                label=stock.symbol,
+            )
 
         self.graph = self.plot.show(legend=True)
         return
 
     def find_y_range(self):
-        y_min = 10000000000000 # Arbitrarily large number (bigger than any single stock should ever be worth)
+        y_min = 10000000000000  # Arbitrarily large number (bigger than any single stock should ever be worth)
         y_max = 0
 
         for stock in self.stocks:
@@ -321,4 +489,3 @@ class Graph:
 
 if __name__ == "__main__":
     main()
-
