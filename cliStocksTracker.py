@@ -1,3 +1,4 @@
+import argparse
 import io
 import pytz
 import plotille
@@ -105,6 +106,18 @@ class Configuration:
 
     def __getitem__(self, key):
         return self.config[key]
+
+
+    def parse_args():
+        # width , height , independent_graphs , timezone , rounding, stocks
+        parser = argparse.ArgumentParser(description="Take options for cliStockTracker.py")
+        parser.add_argument('--width', type=int, help="the width of the chart")
+        parser.add_argument('--height', type=int, help="the height of the chart")
+        parser.add_argument('--independent-graphs', action='store_true', help="show a chart for each stock")
+        parser.add_argument('--timezone', type=str, default="America/New_York", help="your timezione")
+        parser.add_argument('--rounding-mode', type=str, help="how should numbers be rounded")
+        parser.add_argument('--stocks-config', type=argparse.FileType("r", encoding="utf-8"), help="file with stonks")
+
 
     def parse_config(self) -> (dict, None):
         config = {}
